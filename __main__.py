@@ -59,6 +59,7 @@ class Colour:
     # This value can be removed from the enumeration in favor of a global variable or at the beginning of the file,
     # however it allows a certain rigor in the access to colour information
     IS_DARK_THEME = True
+    IS_EPILEPTIC_MODE = False
 
 
 class Button:
@@ -138,6 +139,7 @@ class Mastermind:
         Initiate the default singleton properties then start the main loop.
         """
         self.theme_button = Button((WIDTH - 40, 510), image=Asset.SUN)
+        self.easter_click = 0
 
         # Select the default colour, the colour black corresponds to the default colour of the game board. Thus it
         # corresponds to selecting no colour.
@@ -182,6 +184,9 @@ class Mastermind:
             self.current_turn += 1
 
         window.fill(Colour.BLACK.get(Colour.IS_DARK_THEME))
+        if Colour.IS_EPILEPTIC_MODE:
+            window.fill((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+
         self.render()
 
         pygame.display.flip()
@@ -268,6 +273,14 @@ class Mastermind:
             Colour.IS_DARK_THEME = not Colour.IS_DARK_THEME
             self.theme_button.set_image(Asset.SUN if Colour.IS_DARK_THEME else Asset.MOON)
 
+            self.easter_click += 1
+            if self.easter_click >= 10:
+                Colour.IS_EPILEPTIC_MODE = True
+            return
+
+        # If another click occurs not on the button, the easter egg is canceled
+        self.easter_click = 0
+
         # The buttons located after this condition are useful only when a game is in progress.
         if self.gameover:
             return
@@ -275,11 +288,13 @@ class Mastermind:
         for button in self.toolbar:
             if button.collidepoint(position):
                 self.selected_colour = button.colour
+                return
 
         line = self.grid[self.current_turn]
         for button in line:
             if button.collidepoint(position):
                 button.set_fill_colour(self.selected_colour)
+                return
 
     def verify(self):
         """
