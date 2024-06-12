@@ -275,7 +275,8 @@ class Mastermind:
 
             self.easter_click += 1
             if self.easter_click >= 10:
-                Colour.IS_EPILEPTIC_MODE = True
+                Colour.IS_EPILEPTIC_MODE = not Colour.IS_EPILEPTIC_MODE
+                self.easter_click = 0
             return
 
         # If another click occurs not on the button, the easter egg is canceled
