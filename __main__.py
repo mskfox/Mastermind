@@ -1,5 +1,7 @@
 import pygame
 import random
+import time
+import argparse
 
 pygame.init()
 
@@ -32,15 +34,29 @@ class ThemedColour3:
         self.dark = dark_rgb
         self.light = light_rgb
 
-    def get(self, is_dark_theme):
+    def get(self, can_be_epileptic=False):
         """
         Returns according to the boolean value passed in parameter a tuple in the format red, green, and blue.
         This tuple can be passed to pygame drawing functions when rendering.
         """
-        if is_dark_theme:
+        if Colour.IS_EPILEPTIC_MODE and can_be_epileptic:
+            return Colour.EPILEPTIC.get()
+
+        if Colour.IS_DARK_THEME:
             return self.dark
 
         return self.light
+
+
+class RandomColour3:
+    def __init__(self):
+        self.colour = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+    def refresh(self):
+        self.colour = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+    def get(self):
+        return self.colour
 
 
 class Colour:
@@ -55,6 +71,8 @@ class Colour:
     ORANGE = ThemedColour3((255, 150, 79), (255, 150, 79))
     RED = ThemedColour3((237, 66, 69), (237, 66, 69))
     PINK = ThemedColour3((235, 69, 158), (235, 69, 158))
+
+    EPILEPTIC = RandomColour3()
 
     # These values can be removed from the enumeration in favor of a global variable or at the beginning of the file,
     # however it allows a certain rigor in the access to colour information
@@ -122,8 +140,10 @@ class Button:
         """
         Manage button rendering.
         """
-        pygame.draw.rect(window, self.border_colour.get(Colour.IS_DARK_THEME), (self.px, self.py, self.sx, self.sy), 1)
-        pygame.draw.rect(window, self.colour.get(Colour.IS_DARK_THEME), (self.px + 3, self.py + 3, self.sx - 6, self.sx - 6))
+        pygame.draw.rect(window, self.border_colour.get(), (self.px, self.py, self.sx, self.sy), 1)
+
+        should_be_epileptic = self.colour == Colour.BLACK
+        pygame.draw.rect(window, self.colour.get(should_be_epileptic), (self.px + 3, self.py + 3, self.sx - 6, self.sx - 6))
 
         # Skips image rendering if none has been specified.
         if self.image is not None:
@@ -134,12 +154,16 @@ class Mastermind:
     """
     Entry point of the game, it allows management of logic, rendering and data storage of the game.
     """
-    def __init__(self):
+    def __init__(self, config):
         """
-        Initiate the default singleton properties then start the main loop.
+        Initiate the default properties then start the main loop.
         """
+        self.running = False
+
         self.theme_button = Button((WIDTH - 40, 510), image=Asset.SUN)
         self.easter_click = 0
+
+        self.frame_rate = 1 / config.fps
 
         # Select the default colour, the colour black corresponds to the default colour of the game board. Thus it
         # corresponds to selecting no colour.
@@ -148,7 +172,6 @@ class Mastermind:
         self.selected_colour = Colour.BLACK
 
         self.restart()
-        self.start_tick()
 
     def start_tick(self):
         """
@@ -157,6 +180,7 @@ class Mastermind:
         self.running = True
 
         while self.running:
+            time.sleep(self.frame_rate)
             self.tick()
 
         pygame.quit()
@@ -183,9 +207,10 @@ class Mastermind:
 
             self.current_turn += 1
 
-        window.fill(Colour.BLACK.get(Colour.IS_DARK_THEME))
-        if Colour.IS_EPILEPTIC_MODE:
-            window.fill((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+        Colour.EPILEPTIC.refresh()
+        window.fill(Colour.BLACK.get(True))
+        # if Colour.IS_EPILEPTIC_MODE:
+        #     window.fill())
 
         self.render()
 
@@ -216,10 +241,10 @@ class Mastermind:
         for x in range(4):
             x_pos = 10 + 40 * x
 
-            pygame.draw.rect(window, Colour.WHITE.get(Colour.IS_DARK_THEME), (x_pos, y_pos, 30, 30), 1)
+            pygame.draw.rect(window, Colour.WHITE.get(), (x_pos, y_pos, 30, 30), 1)
 
             if self.gameover:
-                pygame.draw.rect(window, self.code[x].get(Colour.IS_DARK_THEME), (x_pos + 3, y_pos + 3, 24, 24))
+                pygame.draw.rect(window, self.code[x].get(), (x_pos + 3, y_pos + 3, 24, 24))
 
     def render_hints(self):
         """
@@ -232,10 +257,10 @@ class Mastermind:
             y_pos = 10 + 40 * y
 
             # Draw borders
-            pygame.draw.rect(window, Colour.WHITE.get(Colour.IS_DARK_THEME), (x_pos, y_pos, 12, 12), 1)
-            pygame.draw.rect(window, Colour.WHITE.get(Colour.IS_DARK_THEME), (x_pos + 18, y_pos, 12, 12), 1)
-            pygame.draw.rect(window, Colour.WHITE.get(Colour.IS_DARK_THEME), (x_pos, y_pos + 18, 12, 12), 1)
-            pygame.draw.rect(window, Colour.WHITE.get(Colour.IS_DARK_THEME), (x_pos + 18, y_pos + 18, 12, 12), 1)
+            pygame.draw.rect(window, Colour.WHITE.get(), (x_pos, y_pos, 12, 12), 1)
+            pygame.draw.rect(window, Colour.WHITE.get(), (x_pos + 18, y_pos, 12, 12), 1)
+            pygame.draw.rect(window, Colour.WHITE.get(), (x_pos, y_pos + 18, 12, 12), 1)
+            pygame.draw.rect(window, Colour.WHITE.get(), (x_pos + 18, y_pos + 18, 12, 12), 1)
 
             # Generates a list of colours to draw.
             colours_to_draw = []
@@ -244,10 +269,10 @@ class Mastermind:
             colours_to_draw.extend([Colour.BLACK] * (4 - len(colours_to_draw)))
 
             # Draw backgrounds
-            pygame.draw.rect(window, colours_to_draw.pop(0).get(Colour.IS_DARK_THEME), (x_pos + 2, y_pos + 2, 8, 8))
-            pygame.draw.rect(window, colours_to_draw.pop(0).get(Colour.IS_DARK_THEME), (x_pos + 20, y_pos + 2, 8, 8))
-            pygame.draw.rect(window, colours_to_draw.pop(0).get(Colour.IS_DARK_THEME), (x_pos + 2, y_pos + 20, 8, 8))
-            pygame.draw.rect(window, colours_to_draw.pop(0).get(Colour.IS_DARK_THEME), (x_pos + 20, y_pos + 20, 8, 8))
+            pygame.draw.rect(window, colours_to_draw.pop(0).get(), (x_pos + 2, y_pos + 2, 8, 8))
+            pygame.draw.rect(window, colours_to_draw.pop(0).get(), (x_pos + 20, y_pos + 2, 8, 8))
+            pygame.draw.rect(window, colours_to_draw.pop(0).get(), (x_pos + 2, y_pos + 20, 8, 8))
+            pygame.draw.rect(window, colours_to_draw.pop(0).get(), (x_pos + 20, y_pos + 20, 8, 8))
 
     def process_events(self):
         """
@@ -365,5 +390,14 @@ class Mastermind:
             self.toolbar.append(button)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-fps', dest='fps', default=30, type=int, help='Change the frame rate of the application')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    mastermind = Mastermind()
+    args = parse_args()
+
+    mastermind = Mastermind(args)
+    mastermind.start_tick()
