@@ -56,7 +56,7 @@ class Colour:
     RED = ThemedColour3((237, 66, 69), (237, 66, 69))
     PINK = ThemedColour3((235, 69, 158), (235, 69, 158))
 
-    # This value can be removed from the enumeration in favor of a global variable or at the beginning of the file,
+    # These values can be removed from the enumeration in favor of a global variable or at the beginning of the file,
     # however it allows a certain rigor in the access to colour information
     IS_DARK_THEME = True
     IS_EPILEPTIC_MODE = False
